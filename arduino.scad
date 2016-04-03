@@ -1,6 +1,7 @@
-// Arduino connectors library
+// Raspberry Pi connectors library
 //
 // Copyright (c) 2013 Kelly Egan
+// Copyright (c) 2016 Alejandro Medrano
 //
 // The MIT License (MIT)
 //
@@ -20,14 +21,13 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-include <pins.scad>
 
-//Constructs a roughed out arduino board
+//Constructs a roughed out RasberryPi board
 //Current only USB, power and headers
-module arduino(boardType = UNO) {
+module raspberry(boardType = BPLUS) {
   //The PCB with holes
   difference() {
-    color("SteelBlue") 
+    color("DarkGreen") 
       boardShape( boardType );
     translate([0,0,-pcbHeight * 0.5]) holePlacement(boardType = boardType)
       color("SteelBlue") cylinder(r = mountingHoleRadius, h = pcbHeight * 2, $fn=32);
@@ -37,7 +37,7 @@ module arduino(boardType = UNO) {
 }
 
 //Creates a bumper style enclosure that fits tightly around the edge of the PCB.
-module bumper( boardType = UNO, mountingHoles = false ) {
+module bumper( boardType = BPLUS, mountingHoles = false ) {
   bumperBaseHeight = 2;
   bumperHeight = bumperBaseHeight + pcbHeight + 0.5;
   dimensions = boardDimensions(boardType);
@@ -103,7 +103,7 @@ INTERIORMOUNTINGHOLES = 1;
 EXTERIORMOUNTINGHOLES = 2;
 
 //Create a board enclosure
-module enclosure(boardType = UNO, wall = 3, offset = 3, heightExtension = 10, cornerRadius = 3, mountType = TAPHOLE) {
+module enclosure(boardType = BPLUS, wall = 3, offset = 3, heightExtension = 10, cornerRadius = 3, mountType = TAPHOLE) {
   standOffHeight = 5;
 
   dimensions = boardDimensions(boardType);
@@ -151,7 +151,7 @@ module enclosure(boardType = UNO, wall = 3, offset = 3, heightExtension = 10, co
 }
 
 //Create a snap on lid for enclosure
-module enclosureLid( boardType = UNO, wall = 3, offset = 3, cornerRadius = 3, ventHoles = false) {
+module enclosureLid( boardType = BPLUS, wall = 3, offset = 3, cornerRadius = 3, ventHoles = false) {
   dimensions = boardDimensions(boardType);
   boardDim = boardDimensions(boardType);
   pcbDim = pcbDimensions(boardType);
@@ -186,7 +186,7 @@ module enclosureLid( boardType = UNO, wall = 3, offset = 3, cornerRadius = 3, ve
 }
 
 //Offset from board. Negative values are insets
-module boardShape( boardType = UNO, offset = 0, height = pcbHeight ) {
+module boardShape( boardType = BPLUS, offset = 0, height = pcbHeight ) {
   dimensions = boardDimensions(boardType);
 
   xScale = (dimensions[0] + offset * 2) / dimensions[0];
@@ -206,7 +206,7 @@ BOARD = 0;        //Includes all components and PCB
 PCB = 1;          //Just the PCB
 COMPONENTS = 2;   //Just the components
 
-module boundingBox(boardType = UNO, offset = 0, height = 0, cornerRadius = 0, include = BOARD) {
+module boundingBox(boardType = BPLUS, offset = 0, height = 0, cornerRadius = 0, include = BOARD) {
   //What parts are included? Entire board, pcb or just components.
   pos = ([boardPosition(boardType), pcbPosition(boardType), componentsPosition(boardType)])[include];
   dim = ([boardDimensions(boardType), pcbDimensions(boardType), componentsDimensions(boardType)])[include];
@@ -238,7 +238,7 @@ TAPHOLE = 0;
 PIN = 1;
 
 module standoffs( 
-  boardType = UNO, 
+  boardType = BPLUS, 
   height = 10, 
   topRadius = mountingHoleRadius + 1, 
   bottomRadius =  mountingHoleRadius + 2, 
@@ -263,7 +263,7 @@ module standoffs(
 
 //This is used for placing the mounting holes and for making standoffs
 //child elements will be centered on that chosen boards mounting hole centers
-module holePlacement(boardType = UNO ) {
+module holePlacement(boardType = BPLUS ) {
   for(i = boardHoles[boardType] ) {
     translate(i)
       children(0);
@@ -283,7 +283,7 @@ USB = 2;
 POWER = 3;
 RJ45 = 4;
 
-module components( boardType = UNO, component = ALL, extension = 0, offset = 0 ) {
+module components( boardType = BPLUS, component = ALL, extension = 0, offset = 0 ) {
   translate([0, 0, pcbHeight]) {
     for( i = [0:len(components[boardType]) - 1] ){
       if( components[boardType][i][3] == component || component == ALL) {
@@ -384,34 +384,27 @@ function maxPoint( list, index = 0, maximum = [-10000000, -10000000, -10000000] 
   index >= len(list) ? maximum : maxPoint( list, index + 1, maxVec( maximum, list[index] ));
 
 //Returns the pcb position and dimensions
-function pcbPosition(boardType = UNO) = minPoint(boardShapes[boardType]);
-function pcbDimensions(boardType = UNO) = maxPoint(boardShapes[boardType]) - minPoint(boardShapes[boardType]) + [0, 0, pcbHeight];
+function pcbPosition(boardType = BPLUS) = minPoint(boardShapes[boardType]);
+function pcbDimensions(boardType = BPLUS) = maxPoint(boardShapes[boardType]) - minPoint(boardShapes[boardType]) + [0, 0, pcbHeight];
 
 //Returns the position of the box containing all components and its dimensions
-function componentsPosition(boardType = UNO) = minCompPoint(components[boardType]) + [0, 0, pcbHeight];
-function componentsDimensions(boardType = UNO) = maxCompPoint(components[boardType]) - minCompPoint(components[boardType]);
+function componentsPosition(boardType = BPLUS) = minCompPoint(components[boardType]) + [0, 0, pcbHeight];
+function componentsDimensions(boardType = BPLUS) = maxCompPoint(components[boardType]) - minCompPoint(components[boardType]);
 
 //Returns the position and dimensions of the box containing the pcb board
-function boardPosition(boardType = UNO) = 
+function boardPosition(boardType = BPLUS) = 
   minCompPoint([[pcbPosition(boardType), pcbDimensions(boardType)], [componentsPosition(boardType), componentsDimensions(boardType)]]);
-function boardDimensions(boardType = UNO) = 
+function boardDimensions(boardType = BPLUS) = 
   maxCompPoint([[pcbPosition(boardType), pcbDimensions(boardType)], [componentsPosition(boardType), componentsDimensions(boardType)]]) 
   - minCompPoint([[pcbPosition(boardType), pcbDimensions(boardType)], [componentsPosition(boardType), componentsDimensions(boardType)]]);
 
 /******************************* BOARD SPECIFIC DATA ******************************/
 //Board IDs
-NG = 0;
-DIECIMILA = 1;
-DUEMILANOVE = 2;
-UNO = 3;
-LEONARDO = 4;
-MEGA = 5;
-MEGA2560 = 6;
-DUE = 7;
-YUN = 8; 
-INTELGALILEO = 9;
-TRE = 10;
-ETHERNET = 11;
+A = 0;
+APLUS = 1;
+B = 2;
+BPLUS = 3;
+ZERO = 4;
 
 /********************************** MEASUREMENTS **********************************/
 pcbHeight = 1.7;
@@ -419,186 +412,84 @@ headerWidth = 2.54;
 headerHeight = 9;
 mountingHoleRadius = 3.2 / 2;
 
-ngWidth = 53.34;
-leonardoDepth = 68.58 + 1.1;           //PCB depth plus offset of USB jack (1.1)
-ngDepth = 68.58 + 6.5;
-megaDepth = 101.6 + 6.5;               //Coding is my business and business is good!
-dueDepth = 101.6 + 1.1;
-
-arduinoHeight = 11 + pcbHeight + 0;
-
 /********************************* MOUNTING HOLES *********************************/
 
-//Duemilanove, Diecimila, NG and earlier
-ngHoles = [
-  [  2.54, 15.24 ],
-  [  17.78, 66.04 ],
-  [  45.72, 66.04 ]
+//BPLUS holes
+BPLUSHoles = [
+  [  3.5, 3.5 ],
+  [  58 +3.5, 3.5 ],
+  [  3.5, 49+3.5 ],
+  [  58+3.5 , 49+3.5 ]
   ];
 
-//Uno, Leonardo holes
-unoHoles = [
-  [  2.54, 15.24 ],
-  [  17.78, 66.04 ],
-  [  45.72, 66.04 ],
-  [  50.8, 13.97 ]
+//Zero holes
+ZEROHoles = [
+  [  3.5, 3.5 ],
+  [  58 , 3.5 ],
+  [  3.5, 26.5 ],
+  [  58 , 26.5 ]
   ];
 
-//Due and Mega 2560
-dueHoles = [
-  [  2.54, 15.24 ],
-  [  17.78, 66.04 ],
-  [  45.72, 66.04 ],
-  [  50.8, 13.97 ],
-  [  2.54, 90.17 ],
-  [  50.8, 96.52 ]
-  ];
 
-// Original Mega holes
-megaHoles = [
-  [  2.54, 15.24 ],
-  [  50.8, 13.97 ],
-  [  2.54, 90.17 ],
-  [  50.8, 96.52 ]
-  ];
 
 boardHoles = [ 
-  ngHoles,        //NG
-  ngHoles,        //Diecimila
-  ngHoles,        //Duemilanove
-  unoHoles,       //Uno
-  unoHoles,       //Leonardo
-  megaHoles,      //Mega
-  dueHoles,       //Mega 2560
-  dueHoles,       //Due
-  0,              //Yun
-  0,              //Intel Galileo
-  0,              //Tre
-  unoHoles        //Ethernet
+  0,        //A
+  0,        //APLUS
+  0,        //B
+  BPLUSHoles,     //BPLUS
+  ZEROHoles,     //ZERO
   ];
 
 /********************************** BOARD SHAPES **********************************/
-ngBoardShape = [ 
-  [  0.0, 0.0 ],
-  [  53.34, 0.0 ],
-  [  53.34, 66.04 ],
-  [  50.8, 66.04 ],
-  [  48.26, 68.58 ],
-  [  15.24, 68.58 ],
-  [  12.7, 66.04 ],
-  [  1.27, 66.04 ],
-  [  0.0, 64.77 ]
+
+BPLUSBoardShape= [
+    [0,0],
+    [85,0],
+    [85,56],
+    [0,56]
+  ];
+ZEROBoardShape= [
+    [0,0],
+    [65,0],
+    [65,30],
+    [0,30]
   ];
 
-megaBoardShape = [ 
-  [  0.0, 0.0 ],
-  [  53.34, 0.0 ],
-  [  53.34, 99.06 ],
-  [  52.07, 99.06 ],
-  [  49.53, 101.6 ],
-  [  15.24, 101.6 ],
-  [  12.7, 99.06 ],
-  [  2.54, 99.06 ],
-  [  0.0, 96.52 ]
-  ];
-
-boardShapes = [   
-  ngBoardShape,   //NG
-  ngBoardShape,   //Diecimila
-  ngBoardShape,   //Duemilanove
-  ngBoardShape,   //Uno
-  ngBoardShape,   //Leonardo
-  megaBoardShape, //Mega
-  megaBoardShape, //Mega 2560
-  megaBoardShape, //Due
-  0,              //Yun
-  0,              //Intel Galileo
-  0,              //Tre
-  ngBoardShape    //Ethernet
-  ];  
+boardShapes = [ 
+  0,        //A
+  0,        //APLUS
+  0,        //B
+  BPLUSBoardShape,     //BPLUS
+  ZEROBoardShape,     //ZERO
+  ]; 
 
 /*********************************** COMPONENTS ***********************************/
 
 //Component data. 
 //[position, dimensions, direction(which way would a cable attach), type(header, usb, etc.), color]
-ngComponents = [
-  [[1.27, 17.526, 0], [headerWidth, headerWidth * 10, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 26.67, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 6, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[9.34, -6.5, 0],[12, 16, 11],[0, -1, 0], USB, "LightGray" ],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
+DoubleUSBComp = [17,13.20,16];
 
-etherComponents = [
-  [[1.27, 17.526, 0], [headerWidth, headerWidth * 10, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 26.67, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 6, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[7.20, -4.4, 0],[16, 22, 13],[0, -1, 0], RJ45, "Green" ],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
+BPLUSComponents= [
+[[7,-1,0],[8,5.7,3],[0,-1,0],POWER,"silver"],
+[[25,-1.5,0],[15,11.6,6],[0,-1,0],USB,"silver"],
+[[50,-2.5,0],[7,15,5],[0,-1,0],POWER,"black"],
+[[66,2.5,0],[21.3,16,13.6],[1,0,0],RJ45,"silver"],
+[[69,22.5,0],DoubleUSBComp,[1,0,0],USB,"silver"],
+[[69,40,0],DoubleUSBComp,[1,0,0],USB,"silver"],
+[[7,49.7,0],[50,5,7],[0,0,1],HEADER_M,"gold"],
+[[-2,22.5,-2.7],[17,13.6,1],[-1,0,0],USB,"black"],
+];
+ZEROComponents = [
+[],
+];
 
-leonardoComponents = [
-  [[1.27, 17.526, 0], [headerWidth, headerWidth * 10, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 26.67, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 6, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[11.5, -1.1, 0],[7.5, 5.9, 3],[0, -1, 0], USB, "LightGray" ],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
-
-megaComponents = [
-  [[1.27, 22.86, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 67.31, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 31.75, 0], [headerWidth, headerWidth * 6, headerHeight ], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 72.39, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 92.71, 0], [headerWidth * 18, headerWidth * 2, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[9.34, -6.5, 0],[12, 16, 11],[0, -1, 0], USB, "LightGray"],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
-
-mega2560Components = [
-  [[1.27, 17.526, 0], [headerWidth, headerWidth * 10, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 67.31, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 26.67, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[49.53, 72.39, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[1.27, 92.71, 0], [headerWidth * 18, headerWidth * 2, headerHeight], [0, 0, 1], HEADER_F, "Black" ],
-  [[9.34, -6.5, 0],[12, 16, 11],[0, -1, 0], USB, "LightGray" ],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
-
-dueComponents = [
-  [[1.27, 17.526, 0], [headerWidth, headerWidth * 10, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 44.45, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 67.31, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 26.67, 0], [headerWidth, headerWidth * 8, headerHeight ], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 49.53, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[49.53, 72.39, 0], [headerWidth, headerWidth * 8, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[1.27, 92.71, 0], [headerWidth * 18, headerWidth * 2, headerHeight], [0, 0, 1], HEADER_F, "Black"],
-  [[11.5, -1.1, 0], [7.5, 5.9, 3], [0, -1, 0], USB, "LightGray" ],
-  [[27.365, -1.1, 0], [7.5, 5.9, 3], [0, -1, 0], USB, "LightGray" ],
-  [[40.7, -1.8, 0], [9.0, 13.2, 10.9], [0, -1, 0], POWER, "Black" ]
-  ];
-  
-components = [
-  ngComponents,         //NG
-  ngComponents,         //Diecimila
-  ngComponents,         //Duemilanove
-  ngComponents,         //Uno
-  leonardoComponents,   //Leonardo
-  megaComponents,       //Mega
-  mega2560Components,   //Mega 2560
-  dueComponents,        //Due
-  0,                    //Yun
-  0,                    //Intel Galileo
-  0,                    //Tre
-  etherComponents       //Ethernet
-  ];
+components = [ 
+  0,        //A
+  0,        //APLUS
+  0,        //B
+  BPLUSComponents,     //BPLUS
+  ZEROComponents,     //ZERO
+  ]; 
 
 /****************************** NON-BOARD PARAMETERS ******************************/
 
